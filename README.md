@@ -49,6 +49,27 @@ $ ./config shared zlib enable-rfc3779 --prefix=/opt/gost-ssl
 $ make depend
 $ make
 $ make install
+$ vi /opt/gost-ssl/ssl/openssl.cnf
+```
+
+В конфиге в начале (до секций) добавляем:
+
+```
+openssl_conf = openssl_def
+```
+
+И в самом конце:
+
+```
+[openssl_def]
+engines=engine_section
+
+[engine_section]
+gost=gost_section
+
+[gost_section]
+engine_id=gost
+default_algorithms=ALL
 ```
 
 ### Ruby
