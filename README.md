@@ -74,11 +74,17 @@ default_algorithms=ALL
 
 ### Ruby
 
-Ставим [Bundler](http://bundler.io), если его еще нет, и используем его для получения нужных библиотек:
+Ставим [Bundler](http://bundler.io), если его еще нет (root):
 
 ```bash
+$ apt-get install ruby ruby-dev rubygems libxml2-dev
 $ gem install bundler
-$ bundle install
+```
+
+Используем его для получения нужных библиотек (user):
+
+```bash
+$ bundle install --path vendor/bundle
 ```
 
 ## 3, 2, 1... Пуск
@@ -95,4 +101,4 @@ $ bundle exec ruby roskompozor.rb
 $ WSDL_URL="http://vigruzki.rkn.gov.ru/services/OperatorRequest/?wsdl" bundle exec ruby roskompozor.rb
 ```
 
-Ставим в cron с перенаправлением вывода в лог, читаем лог иногда :-)
+Ставим в cron и расслабляемся :-) [cronic](http://habilis.net/cronic/) поможет направлять вывод на почту только в случае ошибки.
