@@ -95,10 +95,11 @@ def fetch_dump(client, code)
       puts "===> Archive written to #{DUMP_DESTINATION_PATH}"
       puts "===> Downloaded for #{response[:operator_name]}, INN #{response[:inn]}"
       break
-    elsif response[:result_code] != 0
+    elsif response[:result_code].to_i < 0
       puts "===> Fetching the dump failed!"
-      break
+      exit 1
     end
+    # false with code 0 == wait
   end
 end
 
