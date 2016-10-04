@@ -4,7 +4,20 @@ A Ruby script for Russian ISPs that fetches [the censorship list](https://github
 
 ## Подготовка
 
-(Подразумевается, что скрипт будет рабоать на UNIX-сервере, а сейчас электронная подпись используется на Windows)
+Есть два варианта работы:
+
+- на UNIX-сервере с ключом в файле;
+- на Windows-сервере с ключом в USB-токене, который работает с КриптоПро CSP.
+
+Для второго варианта не нужно ставить OpenSSL с поддержкой ГОСТ. Нужно только экспортировать сертификат и конвертировать его в PEM формат. Потом написать bat файл типа такого:
+
+```
+call C:\Ruby23-x64\bin\setrbvars.bat
+set SIGNING_TOOL=csptest
+set CERT_NAME=CN сертификата (даже его часть подойдет)
+set WSDL_URL=http://vigruzki.rkn.gov.ru/services/OperatorRequest/?wsdl
+call bundle exec ruby roskompozor.rb
+```
 
 ### Сертификат и ключ
 

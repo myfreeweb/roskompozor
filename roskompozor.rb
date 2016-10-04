@@ -1,11 +1,14 @@
 # ROSKOMPOZOR - a script for Russian ISPs that fetches the censorship list
 # (for everyone else, it's this one: https://github.com/zapret-info/z-i)
 
+CERT_NAME             = ENV["CERT_NAME"]             || ""
 CERT_PATH             = ENV["CERT_PATH"]             || "company.cert.pem"
 KEY_PATH              = ENV["KEY_PATH"]              || "company.key.der"
 KEY_FORMAT            = ENV["KEY_FORMAT"]            || "DER"
 DATES_PATH            = ENV["DATES_PATH"]            || "dates.yml"
 OPENSSL_BIN_PATH      = ENV["OPENSSL_BIN_PATH"]      || "/opt/gost-ssl/bin/openssl"
+CSPTEST_PATH          = ENV["CSPTEST_PATH"]          || "C:/Program Files (x86)/Crypto Pro/CSP/csptest.exe"
+SIGNING_TOOL          = ENV["SIGNING_TOOL"]          || "openssl"
 WANTED_DUMP_FORMAT    = ENV["WANTED_DUMP_FORMAT"]    || "2.2"
 DUMP_DESTINATION_PATH = ENV["DUMP_DESTINATION_PATH"] || "dump.zip"
 WSDL_URL              = ENV["WSDL_URL"]              || "http://vigruzki.rkn.gov.ru/services/OperatorRequestTest/?wsdl"
@@ -22,7 +25,15 @@ require 'excon'
 HTTPI.adapter = :excon
 Excon.defaults[:middlewares] << Excon::Middleware::RedirectFollower
 
-puts "=> ROSKOMPOZOR is using OpenSSL from #{OPENSSL_BIN_PATH}, key in #{KEY_FORMAT} format from #{KEY_PATH}, cert from #{CERT_PATH}, talking to WSDL service at #{WSDL_URL}"
+common_info = "talking to WSDL service at #{WSDL_URL}"
+
+if SIGNING_TOOL == "openssl"
+  puts "=> ROSKOMPOZOR is using OpenSSL from #{OPENSSL_BIN_PATH}, key in #{KEY_FORMAT} format from #{KEY_PATH}, cert from #{CERT_PATH}, #{common_info}"
+elsif SIGNING_TOOL == "csptest"
+  puts "=> ROSKOMPOZOR is using csptest from #{CSPTEST_PATH}, cert name #{CERT_NAME}, #{common_info}"
+else
+  abort "=> ROSKOMPOZOR doesn't support signing tool #{SIGNING_TOOL}!!"
+end
 
 def get_last_dump_times(client)
   puts "\n==> Getting last dump times / service metadata..."
@@ -56,9 +67,14 @@ def create_signed_request
   puts "===> Wrote the request to a temp file: #{reqpath}"
 
   signpath = reqpath + ".sign"
-  rescode = system OPENSSL_BIN_PATH, "smime", "-sign", "-binary", "-signer", CERT_PATH, \
-    "-inkey", KEY_PATH, "-keyform", KEY_FORMAT, \
-    "-outform", "PEM", "-in", reqpath, "-out", signpath
+  if SIGNING_TOOL == "openssl"
+    rescode = system OPENSSL_BIN_PATH, "smime", "-sign", "-binary", "-signer", CERT_PATH, \
+      "-inkey", KEY_PATH, "-keyform", KEY_FORMAT, \
+      "-outform", "PEM", "-in", reqpath, "-out", signpath
+  elsif SIGNING_TOOL == "csptest"
+    rescode = system CSPTEST_PATH, "-sfsign", "-sign", "-my", CERT_NAME, \
+      "-detached", "-add", "-addsigtime", "-in", reqpath, "-out", signpath
+  end
   unless rescode
     puts "===> Signing failed"
     exit 1
